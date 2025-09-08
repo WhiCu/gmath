@@ -2,8 +2,8 @@ package tensor
 
 import "testing"
 
-// 1. BenchmarkNativeMul-16
-//      475           2429622 ns/op          163970 B/op          4 allocs/op
+//  1. BenchmarkNativeMul-16
+//     475           2429622 ns/op          163970 B/op          4 allocs/op
 func BenchmarkNativeMul(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
