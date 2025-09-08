@@ -1,6 +1,8 @@
 package tensor
 
 import (
+	"slices"
+
 	"golang.org/x/exp/constraints"
 )
 
@@ -37,10 +39,28 @@ func NewTensor[T Number](shape ...int) *Tensor[T] {
 	}
 }
 
+func (t *Tensor[T]) Copy() *Tensor[T] {
+	return &Tensor[T]{
+		Shape:   slices.Clone(t.Shape),
+		size:    t.size,
+		Strides: slices.Clone(t.Strides),
+		Data:    slices.Clone(t.Data),
+		zero:    t.zero,
+	}
+}
+
+func (t *Tensor[T]) SameShape(other *Tensor[T]) bool {
+	return SameShape(t, other)
+}
+
+func (t *Tensor[T]) indexOffset(idxs []int) (int, error) {
+	return indexOffset(t, idxs)
+}
+
 // AT || SET
 
 func (t *Tensor[T]) At(idxs ...int) (T, error) {
-	offset, err := indexOffset(t, idxs)
+	offset, err := t.indexOffset(idxs)
 	if err != nil {
 		return t.zero, err
 	}
@@ -54,7 +74,7 @@ func (t *Tensor[T]) MustAt(idxs ...int) T {
 }
 
 func (t *Tensor[T]) Set(v T, idxs ...int) error {
-	offset, err := indexOffset(t, idxs)
+	offset, err := t.indexOffset(idxs)
 	if err != nil {
 		return err
 	}
@@ -70,44 +90,64 @@ func (t *Tensor[T]) MustSet(v T, idxs ...int) error {
 
 // ADD || SUB || MUL || DIV || SCALE || TRANSPOSE
 
-func (t *Tensor[T]) Add(other *Tensor[T]) (*Tensor[T], error) {
-	return Add(t, other)
+func (t *Tensor[T]) Mul(other *Tensor[T]) error {
+	if t.size != other.size && len(t.Shape) != len(other.Shape) {
+		return ErrShapeMismatch
+	}
+
+	//TODO: добавить другие размерности
+	switch {
+	case len(t.Shape) == 2:
+		return t.nativeMul(other)
+	default:
+		return ErrNotImplemented
+	}
 }
 
-func (t *Tensor[T]) MustAdd(other *Tensor[T]) *Tensor[T] {
-	out, err := Add(t, other)
+func (t *Tensor[T]) ElementwiseOp(other *Tensor[T], op func(T, T) T) error {
+	if !SameShape(t, other) {
+		return ErrShapeMismatch
+	}
+	for i := range t.Data {
+		t.Data[i] = op(t.Data[i], other.Data[i])
+	}
+	return nil
+}
+
+func (t *Tensor[T]) Add(other *Tensor[T]) error {
+	return t.ElementwiseOp(other, func(a, b T) T { return a + b })
+}
+
+func (t *Tensor[T]) MustAdd(other *Tensor[T]) {
+	err := t.Add(other)
 	Must(err)
-	return out
 }
 
-func (t *Tensor[T]) Sub(other *Tensor[T]) (*Tensor[T], error) {
-	return Sub(t, other)
+func (t *Tensor[T]) Sub(other *Tensor[T]) error {
+	return t.ElementwiseOp(other, func(a, b T) T { return a - b })
 }
 
-func (t *Tensor[T]) MustSub(other *Tensor[T]) *Tensor[T] {
-	out, err := Sub(t, other)
+func (t *Tensor[T]) MustSub(other *Tensor[T]) {
+	err := t.Sub(other)
 	Must(err)
-	return out
 }
 
-func (t *Tensor[T]) ElemMul(other *Tensor[T]) (*Tensor[T], error) {
-	return ElemMul(t, other)
+func (t *Tensor[T]) ElemMul(other *Tensor[T]) error {
+	return t.ElementwiseOp(other, func(a, b T) T { return a * b })
 }
 
-func (t *Tensor[T]) MustElemMul(other *Tensor[T]) *Tensor[T] {
-	out, err := ElemMul(t, other)
+func (t *Tensor[T]) MustElemMul(other *Tensor[T]) {
+	err := t.ElemMul(other)
 	Must(err)
-	return out
 }
 
-func (t *Tensor[T]) Div(other *Tensor[T]) (*Tensor[T], error) {
-	return Div(t, other)
+func (t *Tensor[T]) Div(other *Tensor[T]) error {
+	return t.ElementwiseOp(other, func(a, b T) T { return a / b })
 }
 
-func (t *Tensor[T]) MustDiv(other *Tensor[T]) *Tensor[T] {
-	out, err := Div(t, other)
+func (t *Tensor[T]) MustDiv(other *Tensor[T]) {
+	err := t.Div(other)
 	Must(err)
-	return out
 }
 
 func (t *Tensor[T]) Scale(c T) *Tensor[T] {
