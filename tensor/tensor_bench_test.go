@@ -10,9 +10,9 @@ func BenchmarkNativeMul(b *testing.B) {
 	b.StopTimer()
 	for i := 0; i < b.N; i++ {
 		m1 := NewMatrix[complex128](100, 100)
-		RandomTensor(m1)
+		RandomTensor(m1.Tensor)
 		m2 := NewMatrix[complex128](100, 100)
-		RandomTensor(m2)
+		RandomTensor(m2.Tensor)
 
 		b.StartTimer()
 		nativeMul(m1, m2)

@@ -1,12 +1,18 @@
 package tensor
 
-type matrix[T Number] = Tensor[T]
-
-func NewMatrix[T Number](x, y int) *matrix[T] {
-	return NewTensor[T](x, y)
+type Matrix[T Number] struct {
+	*Tensor[T]
 }
 
-func E[T Number](x, y int) *matrix[T] {
+func NewMatrix[T Number](x, y int) *Matrix[T] {
+	return &Matrix[T]{NewTensor[T](x, y)}
+}
+
+func NewMatrixFromTenzor[T Number](t *Tensor[T]) *Matrix[T] {
+	return &Matrix[T]{t}
+}
+
+func E[T Number](x, y int) *Matrix[T] {
 	out := NewMatrix[T](x, y)
 	for i := range len(out.Data) {
 		out.Data[i] = 1
@@ -14,7 +20,7 @@ func E[T Number](x, y int) *matrix[T] {
 	return out
 }
 
-func MatMul[T Number](a, b *matrix[T]) (out *matrix[T], err error) {
+func MatMul[T Number](a, b *Matrix[T]) (out *Matrix[T], err error) {
 	if a.Shape[1] != b.Shape[0] {
 		return nil, ErrShapeMismatch
 	}
@@ -22,7 +28,7 @@ func MatMul[T Number](a, b *matrix[T]) (out *matrix[T], err error) {
 	return out, nil
 }
 
-func nativeMul[T Number](a, b *matrix[T]) *matrix[T] {
+func nativeMul[T Number](a, b *Matrix[T]) *Matrix[T] {
 	m, n, p := a.Shape[0], a.Shape[1], b.Shape[1]
 	out := NewMatrix[T](m, p)
 

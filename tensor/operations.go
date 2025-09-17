@@ -1,6 +1,7 @@
 package tensor
 
 import (
+	"math"
 	"math/rand/v2"
 	"slices"
 )
@@ -62,7 +63,8 @@ func Mul[T Number](a, b *Tensor[T]) (out *Tensor[T], err error) {
 	//TODO: добавить другие размерности
 	switch {
 	case len(a.Shape) == 2:
-		return MatMul(a, b)
+		m, err := MatMul(NewMatrixFromTenzor(a), NewMatrixFromTenzor(b))
+		return m.Tensor, err
 	default:
 		return nil, ErrNotImplemented
 	}
@@ -249,4 +251,38 @@ func Rand[T Number]() T {
 		v = complex(rand.Float64(), rand.Float64())
 	}
 	return v.(T)
+}
+
+func Abs[T Number](t T) T {
+	switch v := any(t).(type) {
+	case int:
+		if v < 0 {
+			return any(-v).(T)
+		}
+	case int8:
+		if v < 0 {
+			return any(-v).(T)
+		}
+	case int16:
+		if v < 0 {
+			return any(-v).(T)
+		}
+	case int32:
+		if v < 0 {
+			return any(-v).(T)
+		}
+	case int64:
+		if v < 0 {
+			return any(-v).(T)
+		}
+	case float32:
+		return any(float32(math.Abs(float64(v)))).(T)
+	case float64:
+		return any(math.Abs(v)).(T)
+	case complex64:
+		return any(complex(math.Abs(float64(real(v))), math.Abs(float64(imag(v))))).(T)
+	case complex128:
+		return any(complex(math.Abs(real(v)), math.Abs(imag(v)))).(T)
+	}
+	return t
 }

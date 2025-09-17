@@ -10,11 +10,11 @@ func (t *Tensor[T]) Mul(other *Tensor[T]) (err error) {
 	//TODO: добавить другие размерности
 	switch {
 	case len(t.Shape) == 2:
-		out, err := MatMul(t, other)
+		out, err := MatMul(NewMatrixFromTenzor(t), NewMatrixFromTenzor(other))
 		if err != nil {
 			return err
 		}
-		*t = *out
+		t.Data = out.Data
 		return nil
 	default:
 		return ErrNotImplemented
