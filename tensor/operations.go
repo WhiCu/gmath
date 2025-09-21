@@ -286,3 +286,103 @@ func Abs[T Number](t T) T {
 	}
 	return t
 }
+
+func IsGreater[T Number](a, b T) bool {
+	switch any(a).(type) {
+	case int:
+		return any(a).(int) > any(b).(int)
+	case int8:
+		return any(a).(int8) > any(b).(int8)
+	case int16:
+		return any(a).(int16) > any(b).(int16)
+	case int32:
+		return any(a).(int32) > any(b).(int32)
+	case int64:
+		return any(a).(int64) > any(b).(int64)
+	case uint:
+		return any(a).(uint) > any(b).(uint)
+	case uint8:
+		return any(a).(uint8) > any(b).(uint8)
+	case uint16:
+		return any(a).(uint16) > any(b).(uint16)
+	case uint32:
+		return any(a).(uint32) > any(b).(uint32)
+	case uint64:
+		return any(a).(uint64) > any(b).(uint64)
+	case float32:
+		return any(a).(float32) > any(b).(float32)
+	case float64:
+		return any(a).(float64) > any(b).(float64)
+	case complex64:
+		ra, ia := real(any(a).(complex64)), imag(any(a).(complex64))
+		rb, ib := real(any(b).(complex64)), imag(any(b).(complex64))
+		return ra*ra+ia*ia > rb*rb+ib*ib
+	case complex128:
+		ra, ia := real(any(a).(complex128)), imag(any(a).(complex128))
+		rb, ib := real(any(b).(complex128)), imag(any(b).(complex128))
+		return ra*ra+ia*ia > rb*rb+ib*ib
+	}
+	return false
+}
+
+func IsGreaterOrEqual[T Number](a, b T) bool {
+	return IsGreater(a, b) || a == b
+}
+
+func IsLess[T Number](a, b T) bool {
+	switch any(a).(type) {
+	case int:
+		return any(a).(int) < any(b).(int)
+	case int8:
+		return any(a).(int8) < any(b).(int8)
+	case int16:
+		return any(a).(int16) < any(b).(int16)
+	case int32:
+		return any(a).(int32) < any(b).(int32)
+	case int64:
+		return any(a).(int64) < any(b).(int64)
+	case uint:
+		return any(a).(uint) < any(b).(uint)
+	case uint8:
+		return any(a).(uint8) < any(b).(uint8)
+	case uint16:
+		return any(a).(uint16) < any(b).(uint16)
+	case uint32:
+		return any(a).(uint32) < any(b).(uint32)
+	case uint64:
+		return any(a).(uint64) < any(b).(uint64)
+	case float32:
+		return any(a).(float32) < any(b).(float32)
+	case float64:
+		return any(a).(float64) < any(b).(float64)
+	case complex64:
+		ra, ia := real(any(a).(complex64)), imag(any(a).(complex64))
+		rb, ib := real(any(b).(complex64)), imag(any(b).(complex64))
+		return ra*ra+ia*ia < rb*rb+ib*ib
+	case complex128:
+		ra, ia := real(any(a).(complex128)), imag(any(a).(complex128))
+		rb, ib := real(any(b).(complex128)), imag(any(b).(complex128))
+		return ra*ra+ia*ia < rb*rb+ib*ib
+	}
+	return false
+}
+
+func IsLessOrEqual[T Number](a, b T) bool {
+	return IsLess(a, b) || a == b
+}
+
+func GetEpsilon[T Number]() T {
+	var zero T
+	switch any(zero).(type) {
+	case float32:
+		return any(float32(1e-6)).(T)
+	case float64:
+		return any(1e-12).(T)
+	case complex64:
+		return any(complex64(1e-6)).(T)
+	case complex128:
+		return any(complex128(1e-12)).(T)
+	default:
+		return T(0)
+	}
+}

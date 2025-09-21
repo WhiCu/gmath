@@ -19,6 +19,11 @@ var (
 	ErrInvalidAxis           = errors.New("invalid axis in order")
 	ErrDuplicateAxis         = errors.New("duplicate axis in order")
 
+	// Решение СЛАУ
+	ErrSingularMatrix = errors.New("singular matrix")
+	ErrNoSolution     = errors.New("no solution")
+	ErrInfinitelyMany = errors.New("infinitely many solutions")
+
 	// DEV
 	ErrNotImplemented = errors.New("not implemented")
 )
