@@ -142,14 +142,12 @@ func (t *Matrix[T]) MustSwapCols(col1, col2 int) {
 func (m *Matrix[T]) UpperTriangular() (*Matrix[T], error) {
 	rows, cols := m.Shape[0], m.Shape[1]
 
-	// копируем, чтобы не портить исходную матрицу
 	res := NewMatrix[T](rows, cols)
 	copy(res.Data, m.Data)
 
 	eps := GetEpsilon[T]()
 
 	for k := 0; k < rows && k < cols; k++ {
-		// pivot может быть очень маленьким — ищем строку, где он "не почти ноль"
 		if IsLessOrEqual(Abs(res.MustAt(k, k)), eps) {
 			found := false
 			for i := k + 1; i < rows; i++ {
@@ -160,11 +158,10 @@ func (m *Matrix[T]) UpperTriangular() (*Matrix[T], error) {
 				}
 			}
 			if !found {
-				continue // столбец вырожден
+				continue
 			}
 		}
 
-		// Обнуляем элементы ниже
 		pivot := res.MustAt(k, k)
 		for i := k + 1; i < rows; i++ {
 			if IsLessOrEqual(Abs(res.MustAt(i, k)), eps) {
@@ -181,6 +178,19 @@ func (m *Matrix[T]) UpperTriangular() (*Matrix[T], error) {
 }
 
 func SolveGauss[T Number](a *Matrix[T], b *Vector[T]) (out *Vector[T], err error) {
+	var t T
+	switch any(t).(type) {
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		v, err := SolveGaussInt(any(a).(*Matrix[int]), any(b).(*Vector[int]))
+		return any(v).(*Vector[T]), err
+	case float32, float64, complex64, complex128:
+		return SolveGaussFloat(a, b)
+	default:
+		return nil, ErrNotImplemented
+	}
+}
+
+func SolveGaussFloat[T Number](a *Matrix[T], b *Vector[T]) (out *Vector[T], err error) {
 	defer func() {
 		err = WrapIfNil(err, "SolveGauss")
 	}()
@@ -198,12 +208,11 @@ func SolveGauss[T Number](a *Matrix[T], b *Vector[T]) (out *Vector[T], err error
 		aug.Set(b.MustAt(i), i, cols)
 	}
 	tri, err := aug.UpperTriangular()
-	fmt.Println(tri.PrettyString())
 	if err != nil {
 		return nil, err
 	}
 
-	rankA, rankAug := rankOfMatrix(a), rankOfMatrix(tri)
+	rankA, rankAug := RankOfMatrix(a), RankOfMatrix(tri)
 
 	if rankA < rankAug {
 		return nil, ErrNoSolution
@@ -230,7 +239,7 @@ func SolveGauss[T Number](a *Matrix[T], b *Vector[T]) (out *Vector[T], err error
 	return x, nil
 }
 
-func rankOfMatrix[T Number](m *Matrix[T]) int {
+func RankOfMatrix[T Number](m *Matrix[T]) int {
 	rows, cols := m.Shape[0], m.Shape[1]
 	eps := GetEpsilon[T]()
 	rank := 0
@@ -260,4 +269,55 @@ func (m *Matrix[T]) PrettyString() string {
 		b.WriteString("\n")
 	}
 	return b.String()
+}
+
+func SolveGaussInt(a *Matrix[int], b *Vector[int]) (*Vector[int], error) {
+	rows, cols := a.Shape[0], a.Shape[1]
+	if rows != b.Shape[0] {
+		return nil, ErrShapeMismatch
+	}
+
+	aug := NewMatrix[int](rows, cols+1)
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
+			aug.Set(a.MustAt(i, j), i, j)
+		}
+		aug.Set(b.MustAt(i), i, cols)
+	}
+
+	tri, err := aug.UpperTriangular()
+	if err != nil {
+		return nil, err
+	}
+
+	rankA, rankAug := RankOfMatrix(a), RankOfMatrix(tri)
+	if rankA < rankAug {
+		return nil, ErrNoSolution
+	}
+	if rankA < cols {
+		return nil, ErrInfinitelyMany
+	}
+
+	x := NewVector[int](cols)
+
+	for i := cols - 1; i >= 0; i-- {
+		sum := 0
+		for j := i + 1; j < cols; j++ {
+			sum += tri.MustAt(i, j) * x.MustAt(j)
+		}
+		diag := tri.MustAt(i, i)
+		rhs := tri.MustAt(i, cols) - sum
+
+		if diag == 0 {
+			return nil, fmt.Errorf("zero pivot on row %d", i)
+		}
+
+		if rhs%diag != 0 {
+			return nil, ErrNoSolution
+		}
+
+		x.Set(rhs/diag, i)
+	}
+
+	return x, nil
 }
