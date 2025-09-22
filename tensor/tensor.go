@@ -57,7 +57,7 @@ func (t *Tensor[T]) indexOffset(idxs []int) (int, error) {
 	return indexOffset(t, idxs)
 }
 
-// // AT || SET
+// AT || SET
 
 func (t *Tensor[T]) At(idxs ...int) (T, error) {
 	offset, err := t.indexOffset(idxs)

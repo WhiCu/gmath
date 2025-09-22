@@ -75,9 +75,6 @@ func (t *Matrix[T]) MustSubRows(row1, row2 int) {
 }
 
 func (t *Matrix[T]) SubCols(col1, col2 int) error {
-	if len(t.Shape) != 2 {
-		return ErrNotImplemented // пока только матрицы
-	}
 	rows := t.Shape[0]
 	if col1 < 0 || col1 >= t.Shape[1] || col2 < 0 || col2 >= t.Shape[1] {
 		return ErrInvalidAxis
@@ -95,7 +92,6 @@ func (t *Matrix[T]) MustSubCols(col1, col2 int) {
 	Must(err)
 }
 
-// SwapRows меняет местами строки row1 и row2
 func (t *Matrix[T]) SwapRows(row1, row2 int) error {
 	if row1 < 0 || row1 >= t.Shape[0] || row2 < 0 || row2 >= t.Shape[0] {
 		return ErrInvalidAxis
@@ -117,7 +113,6 @@ func (t *Matrix[T]) MustSwapRows(row1, row2 int) {
 	Must(err)
 }
 
-// SwapCols меняет местами столбцы col1 и col2
 func (t *Matrix[T]) SwapCols(col1, col2 int) error {
 	if col1 < 0 || col1 >= t.Shape[1] || col2 < 0 || col2 >= t.Shape[1] {
 		return ErrInvalidAxis
@@ -271,11 +266,12 @@ func (m *Matrix[T]) PrettyString() string {
 	return b.String()
 }
 
-func SolveGaussInt(a *Matrix[int], b *Vector[int]) (*Vector[int], error) {
+func SolveGaussInt(a *Matrix[int], b *Vector[int]) (out *Vector[int], err error) {
+	defer func() {
+		err = WrapIfNil(err, "SolveGauss")
+	}()
+
 	rows, cols := a.Shape[0], a.Shape[1]
-	if rows != b.Shape[0] {
-		return nil, ErrShapeMismatch
-	}
 
 	aug := NewMatrix[int](rows, cols+1)
 	for i := 0; i < rows; i++ {

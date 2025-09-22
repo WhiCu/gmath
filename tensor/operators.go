@@ -1,7 +1,5 @@
 package tensor
 
-//
-
 func (t *Tensor[T]) Mul(other *Tensor[T]) (err error) {
 	if t.size != other.size && len(t.Shape) != len(other.Shape) {
 		return ErrShapeMismatch
